@@ -27,39 +27,6 @@ public:
     }
 
 private:
-    // void packet_callback(const velodyne_msgs::msg::VelodyneScan::SharedPtr msg) {
-    //     // Create a point cloud message
-    //     auto pcl_msgs = sensor_msgs::msg::PointCloud2();
-    //     pcl_msgs.header.stamp = msg->header.stamp;
-    //     pcl_msgs.header.frame_id = "velodyne";
-
-    //     // Define the PointCloud2 fields: x, y, z, intensity
-    //     pcl_msgs.height = 1; // Unstructured point cloud
-    //     pcl_msgs.is_dense = false; // Contains invalid points
-    //     pcl_msgs.fields = {
-    //         sensor_msgs::msg::PointField{"x", 0, sensor_msgs::msg::PointField::FLOAT32, 1},
-    //         sensor_msgs::msg::PointField{"y", 4, sensor_msgs::msg::PointField::FLOAT32, 1},
-    //         sensor_msgs::msg::PointField{"z", 8, sensor_msgs::msg::PointField::FLOAT32, 1},
-    //         sensor_msgs::msg::PointField{"intensity", 12, sensor_msgs::msg::PointField::FLOAT32, 1}
-    //     };
-    //     pcl_msgs.point_step = 16; // Size of a point in bytes (4 fields * 4 bytes each)
-    //     pcl_msgs.is_bigendian = false;
-
-    //     // Iterate through the packets and decode the points
-    //     std::vector<float> points;
-    //     for (const auto& packet : msg->packets) {
-    //         decode_packet(packet, points);
-    //     }
-
-    //     // Fill the point cloud message with the decoded points
-    //     pcl_msgs.width = points.size() / 4; // Number of points
-    //     pcl_msgs.row_step = pcl_msgs.point_step * pcl_msgs.width; // Size of the point cloud in bytes
-    //     pcl_msgs.data.resize(points.size() * sizeof(float));
-    //     std::memcpy(pcl_msgs.data.data(), points.data(), pcl_msgs.data.size());
-
-    //     // Publish the point cloud message
-    //     _pcl_publisher->publish(pcl_msgs);
-    // }
 
     void packet_callback(const velodyne_msgs::msg::VelodyneScan::SharedPtr msg) {
         // Create a PointCloud2 message
