@@ -36,7 +36,7 @@ private:
 
         // Define the PointCloud2 fields: x, y, z, intensity
         pcl_msgs.height = 1; // Unstructured point cloud
-        pcl_msgs.is_dense = false; // Contains invalid points
+        pcl_msgs.is_dense = true; // Contains invalid points
         pcl_msgs.point_step = 16; // Size of a point in bytes (4 fields * 4 bytes each)
         pcl_msgs.is_bigendian = false;
 
