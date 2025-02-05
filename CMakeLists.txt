@@ -13,15 +13,18 @@ find_package(velodyne_msgs REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(tf2_ros REQUIRED)
 
-# add executable
+# add executable for lidar_subscriber
 add_executable(lidar_subscriber src/lidar_subscriber.cpp)
-
-# link dependencies
 ament_target_dependencies(lidar_subscriber rclcpp sensor_msgs velodyne_msgs pcl_ros tf2_ros)
+
+# add executable for pcl_generation
+add_executable(pcl_generation src/pcl_generation.cpp)
+ament_target_dependencies(pcl_generation rclcpp sensor_msgs velodyne_msgs pcl_ros tf2_ros)
 
 # install executable
 install(TARGETS
-lidar_subscriber
+  lidar_subscriber
+  pcl_generation
   DESTINATION lib/${PROJECT_NAME}
 )
 
