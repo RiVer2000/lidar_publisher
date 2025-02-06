@@ -1,0 +1,12 @@
+name: pcl
+root: ~/velodyne_ws/src/lidar_publisher
+startup_window: 
+pre_window: source install/setup.zsh
+windows: 
+  - core:
+      layout: main-horizontal
+      panes:
+        - ros2 launch velodyne_driver velodyne_driver_node-VLP16-launch.py
+        - sleep 1.5; ros2 run tf2_ros static_transform_publisher 0 0 0 0 0 0 base_link velodyne 
+        - sleep 1; ros2 run lidar_publisher pcl_generation 
+        - sleep 1; rviz2 

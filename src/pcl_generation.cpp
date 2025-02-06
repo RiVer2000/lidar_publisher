@@ -84,32 +84,37 @@ private:
 
     void decode_packet(const velodyne_msgs::msg::VelodynePacket& packet, std::vector<float>& points) {
         const uint8_t* data = packet.data.data();
+        const std::vector<float> vertical_angles = { // Example angles for VLP-16
+            -15.0, 1.0, -13.0, -3.0, -11.0, -5.0, -9.0, -7.0,
+            8.0, 2.0, 10.0, 4.0, 12.0, 6.0, 14.0, 0.0
+        };
 
         for (int block = 0; block < 12; ++block) {
-            // Access azimuth angle (2 bytes)
             uint16_t azimuth = data[block * 100 + 2] | (data[block * 100 + 3] << 8);
-            float azimuth_rad = azimuth * M_PI / 18000.0; // Convert to radians
+            float azimuth_rad = azimuth * M_PI / 18000.0;
 
-            // Decode 32 laser returns in the block
             for (int laser = 0; laser < 32; ++laser) {
                 uint16_t distance = data[block * 100 + 4 + laser * 3] |
                                     (data[block * 100 + 5 + laser * 3] << 8);
                 uint8_t intensity = data[block * 100 + 6 + laser * 3];
 
-                // Convert distance to meters and compute Cartesian coordinates
-                float distance_m = distance * 0.002; // Convert to meters
-                float x = distance_m * cos(azimuth_rad);
-                float y = distance_m * sin(azimuth_rad);
-                float z = distance_m; // For simplicity, assume flat ground
+                if (laser >= static_cast<int>(vertical_angles.size())) continue;
 
-                // Add the decoded point to the points vector
+                float distance_m = distance * 0.002;
+                float vertical_angle_rad = vertical_angles[laser] * M_PI / 180.0;
+
+                float x = distance_m * cos(vertical_angle_rad) * cos(azimuth_rad);
+                float y = distance_m * cos(vertical_angle_rad) * sin(azimuth_rad);
+                float z = distance_m * sin(vertical_angle_rad);
+
                 points.push_back(x);
                 points.push_back(y);
                 points.push_back(z);
-                points.push_back(static_cast<float>(intensity)); // Intensity as float
+                points.push_back(static_cast<float>(intensity));
             }
         }
     }
+
 
     rclcpp::Subscription<velodyne_msgs::msg::VelodyneScan>::SharedPtr _pcl_subscriber;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr _pcl_publisher;
