@@ -79,45 +79,42 @@ private:
 
         // Publish the point cloud message
         _pcl_publisher->publish(pcl_msgs);
+        RCLCPP_INFO(this->get_logger(), "Points generated in this packet: %ld", points.size() / 4);
+        // RCLCPP_INFO(this->get_logger(), "Packets received in last 200 ms: %d", packet_count_);
+
     }
 
+    void decode_packet(const velodyne_msgs::msg::VelodynePacket& packet, std::vector<float>& points) {
+        const uint8_t* data = packet.data.data();
+        const std::vector<float> vertical_angles = {
+            -10.0, -8.67, -7.33, -6.0, -4.67, -3.33, -2.0, -0.67,
+            0.67, 2.0, 3.33, 4.67, 6.0, 7.33, 8.67, 10.0
+        };
 
-void decode_packet(const velodyne_msgs::msg::VelodynePacket& packet, std::vector<float>& points) {
-    const uint8_t* data = packet.data.data();
-    const std::vector<float> vertical_angles = {
-    -10.0, -8.67, -7.33, -6.0, -4.67, -3.33, -2.0, -0.67,
-    0.67, 2.0, 3.33, 4.67, 6.0, 7.33, 8.67, 10.0
-    };
+        for (int block = 0; block < 12; ++block) {
+            uint16_t azimuth = data[block * 100 + 2] | (data[block * 100 + 3] << 8);
+            float azimuth_rad = azimuth * M_PI / 18000.0;
 
-    for (int block = 0; block < 12; ++block) {
-        uint16_t azimuth = data[block * 100 + 2] | (data[block * 100 + 3] << 8);
-        float azimuth_rad = azimuth * M_PI / 18000.0;
+            for (int laser = 0; laser < 16; ++laser) { // Adjusted for 16 channels
+                uint16_t distance = data[block * 100 + 4 + laser * 3] |
+                                    (data[block * 100 + 5 + laser * 3] << 8);
+                uint8_t intensity = data[block * 100 + 6 + laser * 3];
 
-        for (int laser = 0; laser < 32; ++laser) {
-            uint16_t distance = data[block * 100 + 4 + laser * 3] |
-                                (data[block * 100 + 5 + laser * 3] << 8);
-            uint8_t intensity = data[block * 100 + 6 + laser * 3];
+                float distance_m = distance * 0.002; // Convert to meters
+                float vertical_angle_rad = vertical_angles[laser] * M_PI / 180.0;
 
-            if (laser >= static_cast<int>(vertical_angles.size())) continue;
+                float x = distance_m * cos(vertical_angle_rad) * cos(azimuth_rad);
+                float y = distance_m * cos(vertical_angle_rad) * sin(azimuth_rad);
+                float z = distance_m * sin(vertical_angle_rad);
 
-            float distance_m = distance * 0.002;
-            float vertical_angle_rad = vertical_angles[laser] * M_PI / 180.0;
-
-            float x = distance_m * cos(vertical_angle_rad) * cos(azimuth_rad);
-            float y = distance_m * cos(vertical_angle_rad) * sin(azimuth_rad);
-            float z = distance_m * sin(vertical_angle_rad);
-
-            // Debug log for each point
-            RCLCPP_INFO(this->get_logger(), "Point: x=%f, y=%f, z=%f, intensity=%f",
-                        x, y, z, static_cast<float>(intensity));
-
-            points.push_back(x);
-            points.push_back(y);
-            points.push_back(z);
-            points.push_back(static_cast<float>(intensity));
+                points.push_back(x);
+                points.push_back(y);
+                points.push_back(z);
+                points.push_back(static_cast<float>(intensity));
+            }
         }
     }
-}
+
 
 
     rclcpp::Subscription<velodyne_msgs::msg::VelodyneScan>::SharedPtr _pcl_subscriber;
